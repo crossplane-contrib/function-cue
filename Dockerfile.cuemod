@@ -1,0 +1,5 @@
+# syntax = edrevo/dockerfile-plus
+
+INCLUDE+ Dockerfile
+
+COPY cue.mod/ ./cue.mod

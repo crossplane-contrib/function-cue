@@ -1,0 +1,6 @@
+apiVersion: nopexample.org/v1
+kind: XBucket
+metadata:
+  name: test-xrender
+spec:
+  bucketRegion: us-east-2
