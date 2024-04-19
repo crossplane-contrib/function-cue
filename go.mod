@@ -1,11 +1,15 @@
-module github.com/elastic/crossplane-function-cue
+module github.com/crossplane-contrib/function-cue
 
 go 1.21
 
+toolchain go1.21.3
+
 require (
-	cuelang.org/go v0.7.0
+	cuelang.org/go v0.7.1
+	github.com/alecthomas/kong v0.9.0
 	github.com/crossplane/crossplane-runtime v1.14.0
 	github.com/crossplane/function-sdk-go v0.1.0
+	github.com/elastic/crossplane-function-cue v0.1.9
 	github.com/ghodss/yaml v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.0

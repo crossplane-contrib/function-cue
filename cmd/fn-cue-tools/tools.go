@@ -23,7 +23,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elastic/crossplane-function-cue/internal/cuetools"
+	"github.com/crossplane-contrib/function-cue/internal/cuetools"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
