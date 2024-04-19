@@ -87,6 +87,15 @@ The names of the request and response objects are configurable in the function i
 See the [example implementation](examples/simple/platform/compositions/xs3bucket/runtime/) to get a sense of 
 how the composition works. A detailed walkthrough can be found in the [README](examples/simple/) for the example.
 
+## Debug output for specific XRs
+
+The function can produce debug output in terms of showing requests and responses in the pod logs, which is also
+useful for setting up unit tests. You can enable debugging per-XR by annotating it as follows:
+
+```
+cue.fn.crossplane.io/debug=true
+```
+
 ## License
 
 The code is distributed under the Apache 2 license. See the [LICENSE](LICENSE) file for details.

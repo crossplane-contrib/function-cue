@@ -37,7 +37,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-const debugAnnotation = "function-cue/debug"
+const debugAnnotation = "cue.fn.crossplane.io/debug"
 
 // Options are options for the cue runner.
 type Options struct {
