@@ -23,7 +23,7 @@ import (
 	"strings"
 	"testing"
 
-	input "github.com/elastic/crossplane-function-cue/pkg/input/v1beta1"
+	input "github.com/crossplane-contrib/function-cue/input/v1beta1"
 	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -259,13 +259,11 @@ response: desired: resources: main: resource: {
 	bar: "baz"
 }
 `
-	in := input.CueFunctionParams{
+	in := input.CueInput{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1Aplha1", Kind: "Function"},
 		ObjectMeta: metav1.ObjectMeta{Name: "foobar"},
-		Spec: input.CueInputSpec{
-			Script: script,
-			Debug:  true,
-		},
+		Script:     script,
+		Debug:      true,
 	}
 	b, err := json.Marshal(in)
 	require.NoError(t, err)

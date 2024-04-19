@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/cuecontext"
@@ -35,11 +34,10 @@ import (
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-const debugAnnotation = "crossplane-function-cue/debug"
+const debugAnnotation = "function-cue/debug"
 
 // Options are options for the cue runner.
 type Options struct {
@@ -193,48 +191,40 @@ func (f *Cue) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) 
 	}
 
 	// get inputs
-	in := &input.CueFunctionParams{}
+	in := &input.CueInput{}
 	if err := request.GetInput(req, in); err != nil {
 		return nil, errors.Wrap(err, "unable to get input")
 	}
-	if in.Spec.Script == "" {
+	if in.Script == "" {
 		return nil, fmt.Errorf("input script was not specified")
 	}
-	if in.Spec.DebugNew {
+	if in.DebugNew {
 		if len(req.GetObserved().GetResources()) == 0 {
 			debugThis = true
 		}
 	}
-	if in.Spec.TTL != "" {
-		d, err := time.ParseDuration(in.Spec.TTL)
-		if err != nil {
-			logger.Info(fmt.Sprintf("invalid TTL: %s, %v", in.Spec.TTL, err))
-		} else {
-			res.GetMeta().Ttl = durationpb.New(d)
-		}
-	}
 	// set up the request and response variables
 	requestVar := "#request"
-	if in.Spec.RequestVar != "" {
-		requestVar = in.Spec.RequestVar
+	if in.RequestVar != "" {
+		requestVar = in.RequestVar
 	}
 	var responseVar string
-	switch in.Spec.ResponseVar {
+	switch in.ResponseVar {
 	case ".":
 		responseVar = ""
 	case "":
 		responseVar = "response"
 	default:
-		responseVar = in.Spec.ResponseVar
+		responseVar = in.ResponseVar
 	}
-	state, err := f.Eval(req, in.Spec.Script, EvalOptions{
+	state, err := f.Eval(req, in.Script, EvalOptions{
 		RequestVar:          requestVar,
 		ResponseVar:         responseVar,
-		DesiredOnlyResponse: in.Spec.LegacyDesiredOnlyResponse,
+		DesiredOnlyResponse: in.LegacyDesiredOnlyResponse,
 		Debug: DebugOptions{
-			Enabled: f.debug || in.Spec.Debug || debugThis,
-			Raw:     in.Spec.DebugRaw,
-			Script:  in.Spec.DebugScript,
+			Enabled: f.debug || in.Debug || debugThis,
+			Raw:     in.DebugRaw,
+			Script:  in.DebugScript,
 		},
 	})
 	if err != nil {

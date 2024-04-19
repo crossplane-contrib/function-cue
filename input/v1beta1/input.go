@@ -37,8 +37,13 @@ const (
 	ScriptSourceInline ScriptSource = "Inline"
 )
 
-// CueInputSpec is the spec for running a cue script.
-type CueInputSpec struct {
+// CueInput can be used to provide input to the function.
+// +kubebuilder:object:root=true
+// +kubebuilder:storageversion
+// +kubebuilder:resource:categories=crossplane
+type CueInput struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Source of this script. Currently only Inline is supported.
 	// +kubebuilder:validation:Enum=Inline
 	// +kubebuilder:default=Inline
@@ -46,17 +51,11 @@ type CueInputSpec struct {
 	// Script specifies an inline script
 	// +optional
 	Script string `json:"script,omitempty"`
-	// TTL is a duration string which, when set, will cause the function to set the TTL
-	// for reconciliation to be the specified value. Defaults to 1m.
-	// +optional
-	TTL string `json:"ttl,omitempty"`
 	// RequestVar is the variable name that the function will use to provide inputs to the
-	// cue script. Defaults to "request"
+	// cue script. Defaults to "#request"
 	RequestVar string `json:"requestVar,omitempty"`
 	// ResponseVar is the variable name that the function will expect the response to be returned as.
 	// Defaults to "response". The special value "." means "use the entire object returned by the script".
-	// Note that if you use the "." value you should also set the request variable to be something private
-	// like "_request".
 	ResponseVar string `json:"responseVar,omitempty"`
 	// LegacyDesiredOnlyResponse provides backward compatibility with older versions
 	// of the function when the function only expected the desired state to be returned.
@@ -68,8 +67,8 @@ type CueInputSpec struct {
 	// Inputs are pre-processed to remove typically irrelevant information like
 	// the last applied kubectl annotation, managed fields etc.
 	// Objects are displayed in compact cue format. (the equivalent of `cue fmt -s`)
-	// When false, individual XRs can still be debugged by annotation them with
-	//    crossplane-function-cue/debug: "true"
+	// When false, individual XRs can still be debugged by annotating them with
+	//    function-cue/debug: "true"
 	// +optional
 	Debug bool `json:"debug,omitempty"`
 	// DebugNew controls whether a new XR that is being processed by the function
@@ -85,15 +84,4 @@ type CueInputSpec struct {
 	// DebugScript displays the full generated script that is executed.
 	// +optional
 	DebugScript bool `json:"debugScript,omitempty"`
-}
-
-// CueFunctionParams can be used to provide input to the cue function runner.
-// +kubebuilder:object:root=true
-// +kubebuilder:storageversion
-// +kubebuilder:resource:categories=crossplane
-type CueFunctionParams struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	// Spec is the input spec for the function.
-	Spec CueInputSpec `json:"spec"`
 }
