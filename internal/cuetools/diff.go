@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	ExternalDiffEnvVar = "XP_FUNCTION_CUE_DIFF"
+	ExternalDiffEnvVar = "FUNCTION_CUE_DIFF"
 )
 
 func printNativeDiffs(expectedString, actualString string) error {

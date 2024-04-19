@@ -1,0 +1,3 @@
+# we want the example to use the latest executable so commit the go.work file
+!go.work
+

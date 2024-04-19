@@ -13,44 +13,43 @@ spec:
       functionRef:
         name: fn-cue-examples-simple
       input:
-        spec:
-          source: Inline
-          script: |
-            package replicatedmap
-
-            {
-            	for ns in params.namespaces {
-            		response: desired: resources: "config_map_\(ns)": resource: {
-            			apiVersion: "kubernetes.crossplane.io/v1alpha2"
-            			kind:       "Object"
-            			metadata: name: "cm-\(compName)-\(ns)"
-            			spec: forProvider: manifest: {
-            				apiVersion: "v1"
-            				kind:       "ConfigMap"
-            				metadata: {
-            					namespace: ns
-            					name:      configMapName
-            					labels:    composite.metadata.labels
-            				}
-            				data: params.data
-            			}
-            		}
-            	}
-            }
-            #request: {
-            	...
-            }
-            composite:     #request.observed.composite.resource
-            compName:      composite.metadata.name
-            params:        composite.spec.parameters
-            configMapName: [
-            		if params.name != _|_ // explicit error (_|_ literal) in source
-            		{
-            		params.name
-            	}, composite.metadata.labels["crossplane.io/claim-name"]][0]
-          debugNew: true
-        kind: CueFunctionInput
         apiVersion: function-cue/v1
+        kind: CueFunctionInput
+        source: Inline
+        script: |
+          package replicatedmap
+
+          {
+          	for ns in params.namespaces {
+          		response: desired: resources: "config_map_\(ns)": resource: {
+          			apiVersion: "kubernetes.crossplane.io/v1alpha2"
+          			kind:       "Object"
+          			metadata: name: "cm-\(compName)-\(ns)"
+          			spec: forProvider: manifest: {
+          				apiVersion: "v1"
+          				kind:       "ConfigMap"
+          				metadata: {
+          					namespace: ns
+          					name:      configMapName
+          					labels:    composite.metadata.labels
+          				}
+          				data: params.data
+          			}
+          		}
+          	}
+          }
+          #request: {
+          	...
+          }
+          composite:     #request.observed.composite.resource
+          compName:      composite.metadata.name
+          params:        composite.spec.parameters
+          configMapName: [
+          		if params.name != _|_ // explicit error (_|_ literal) in source
+          		{
+          		params.name
+          	}, composite.metadata.labels["crossplane.io/claim-name"]][0]
+        debugNew: true
     - step: run auto ready
       functionRef:
         name: fn-auto-ready
@@ -72,146 +71,145 @@ spec:
       functionRef:
         name: fn-cue-examples-simple
       input:
-        spec:
-          source: Inline
-          script: |
-            package s3bucket
-
-            import (
-            	"list"
-            	"encoding/json"
-            )
-
-            let endpoints0 = [
-            	for s in suffixes {
-            		let bucketName_1 = "bucket\(s)"
-            		[
-            			if #request.observed.resources[bucketName_1].resource.status.atProvider.bucketRegionalDomainName != _|_ // explicit error (_|_ literal) in source
-            			{
-            				#request.observed.resources[bucketName_1].resource.status.atProvider.bucketRegionalDomainName
-            			}, "unknown"][0]
-            	}]
-            let endpoints1 = [for e in endpoints0 if e != "unknown" {
-            	e
-            }]
-            let mainARN = #request.observed.resources.main.resource.status.atProvider.arn
-            let baseARN = [
-            	if mainARN != _|_ // explicit error (_|_ literal) in source
-            	{
-            		mainARN
-            	}, "unknown"][0]
-            let arns = [
-            	for s in suffixes {
-            		let bucketName_2 = "bucket\(s)"
-            		let arn_1 = #request.observed.resources[bucketName_2].resource.status.atProvider.arn
-            		[
-            			if arn_1 != _|_ // explicit error (_|_ literal) in source
-            			{
-            				arn_1
-            			}, "unknown"][0]
-            	}]
-            let additionalARNs = [for e in arns if e != "unknown" {
-            	e
-            }]
-            let p = #request.observed.resources.main.resource.status.atProvider.bucketRegionalDomainName
-            {
-            	response: desired: resources: {
-            		let S = spec
-            		for s in suffixes {
-            			let bucketName = "bucket\(s)"
-            			(bucketName): resource: {
-            				apiVersion: "s3.aws.upbound.io/v1beta1"
-            				kind:       "Bucket"
-            				metadata: name: "\(compName)\(s)"
-            				spec: forProvider: {
-            					forceDestroy: true
-            					region:       S.parameters.region
-            					tags:         tagValues
-            				}
-            			}
-            		}
-            	}
-
-            	// only render additional endpoints if all of them are available since it is an ordered list
-            	// that matches the suffix list
-            	if len(endpoints1) == len(suffixes) && len(suffixes) > 0 {
-            		response: desired: composite: resource: status: additionalEndpoints: endpoints1
-            	}
-            }
-            {
-            	// if we have a base ARN, render a policy with that and any additional ARNs available.
-            	if baseARN != "unknown" {
-            		let allTuples = list.Concat([[baseARN, baseARN + "/*"], [
-            			for a in additionalARNs {
-            				[a, a + "/*"]
-            			}]])
-            		let allResources = list.FlattenN(allTuples, 1)
-            		response: desired: resources: iam_policy: resource: {
-            			apiVersion: "iam.aws.upbound.io/v1beta1"
-            			kind:       "Policy"
-            			metadata: name: "\(compName)-access-policy"
-            			spec: forProvider: {
-            				path: "/"
-            				policy: json.Marshal({
-            					Version: "2012-10-17"
-            					Statement: [{
-            						Sid: "S3BucketAccess"
-            						Action: ["s3:GetObject", "s3:PutObject"]
-            						Effect:   "Allow"
-            						Resource: allResources
-            					}]
-            				})
-            			}
-            		}
-            	}
-            	{
-            		let policyARN = #request.observed.resources.iam_policy.resource.status.atProvider.arn
-            		if policyARN != _|_ // explicit error (_|_ literal) in source
-            		{
-            			response: desired: composite: resource: status: iamPolicyARN: policyARN
-            		}
-            	}
-            }
-            {
-            	if p != _|_ // explicit error (_|_ literal) in source
-            	{
-            		response: desired: composite: resource: status: primaryEndpoint: p
-            	}
-            }
-
-            // responses should be generated based on the request object. The variable below declares it as an open struct
-            // so that it can be referenced in expressions.
-            #request: {
-            	...
-            }
-
-            // create some fields for easy access to nested JSON paths and provide defaults
-            composite: #request.observed.composite.resource
-            compName:  composite.metadata.name
-            spec:      composite.spec
-            tagValues: [
-            		if composite.spec.parameters.tags != _|_ // explicit error (_|_ literal) in source
-            		{
-            		composite.spec.parameters.tags
-            	}, {}][0]
-            response: desired: resources: main: resource: {
-            	apiVersion: "s3.aws.upbound.io/v1beta1"
-            	kind:       "Bucket"
-            	metadata: name: compName
-            	spec: forProvider: {
-            		forceDestroy: true
-            		region:       composite.spec.parameters.region
-            		tags:         tagValues
-            	}
-            }
-            suffixes: [
-            		if spec.parameters.additionalSuffixes != _|_ // explicit error (_|_ literal) in source
-            		{
-            		spec.parameters.additionalSuffixes
-            	}, []][0]
-          debugNew: true
-        kind: CueFunctionInput
         apiVersion: function-cue/v1
+        kind: CueFunctionInput
+        source: Inline
+        script: |
+          package s3bucket
+
+          import (
+          	"list"
+          	"encoding/json"
+          )
+
+          let endpoints0 = [
+          	for s in suffixes {
+          		let bucketName_1 = "bucket\(s)"
+          		[
+          			if #request.observed.resources[bucketName_1].resource.status.atProvider.bucketRegionalDomainName != _|_ // explicit error (_|_ literal) in source
+          			{
+          				#request.observed.resources[bucketName_1].resource.status.atProvider.bucketRegionalDomainName
+          			}, "unknown"][0]
+          	}]
+          let endpoints1 = [for e in endpoints0 if e != "unknown" {
+          	e
+          }]
+          let mainARN = #request.observed.resources.main.resource.status.atProvider.arn
+          let baseARN = [
+          	if mainARN != _|_ // explicit error (_|_ literal) in source
+          	{
+          		mainARN
+          	}, "unknown"][0]
+          let arns = [
+          	for s in suffixes {
+          		let bucketName_2 = "bucket\(s)"
+          		let arn_1 = #request.observed.resources[bucketName_2].resource.status.atProvider.arn
+          		[
+          			if arn_1 != _|_ // explicit error (_|_ literal) in source
+          			{
+          				arn_1
+          			}, "unknown"][0]
+          	}]
+          let additionalARNs = [for e in arns if e != "unknown" {
+          	e
+          }]
+          let p = #request.observed.resources.main.resource.status.atProvider.bucketRegionalDomainName
+          {
+          	response: desired: resources: {
+          		let S = spec
+          		for s in suffixes {
+          			let bucketName = "bucket\(s)"
+          			(bucketName): resource: {
+          				apiVersion: "s3.aws.upbound.io/v1beta1"
+          				kind:       "Bucket"
+          				metadata: name: "\(compName)\(s)"
+          				spec: forProvider: {
+          					forceDestroy: true
+          					region:       S.parameters.region
+          					tags:         tagValues
+          				}
+          			}
+          		}
+          	}
+
+          	// only render additional endpoints if all of them are available since it is an ordered list
+          	// that matches the suffix list
+          	if len(endpoints1) == len(suffixes) && len(suffixes) > 0 {
+          		response: desired: composite: resource: status: additionalEndpoints: endpoints1
+          	}
+          }
+          {
+          	// if we have a base ARN, render a policy with that and any additional ARNs available.
+          	if baseARN != "unknown" {
+          		let allTuples = list.Concat([[baseARN, baseARN + "/*"], [
+          			for a in additionalARNs {
+          				[a, a + "/*"]
+          			}]])
+          		let allResources = list.FlattenN(allTuples, 1)
+          		response: desired: resources: iam_policy: resource: {
+          			apiVersion: "iam.aws.upbound.io/v1beta1"
+          			kind:       "Policy"
+          			metadata: name: "\(compName)-access-policy"
+          			spec: forProvider: {
+          				path: "/"
+          				policy: json.Marshal({
+          					Version: "2012-10-17"
+          					Statement: [{
+          						Sid: "S3BucketAccess"
+          						Action: ["s3:GetObject", "s3:PutObject"]
+          						Effect:   "Allow"
+          						Resource: allResources
+          					}]
+          				})
+          			}
+          		}
+          	}
+          	{
+          		let policyARN = #request.observed.resources.iam_policy.resource.status.atProvider.arn
+          		if policyARN != _|_ // explicit error (_|_ literal) in source
+          		{
+          			response: desired: composite: resource: status: iamPolicyARN: policyARN
+          		}
+          	}
+          }
+          {
+          	if p != _|_ // explicit error (_|_ literal) in source
+          	{
+          		response: desired: composite: resource: status: primaryEndpoint: p
+          	}
+          }
+
+          // responses should be generated based on the request object. The variable below declares it as an open struct
+          // so that it can be referenced in expressions.
+          #request: {
+          	...
+          }
+
+          // create some fields for easy access to nested JSON paths and provide defaults
+          composite: #request.observed.composite.resource
+          compName:  composite.metadata.name
+          spec:      composite.spec
+          tagValues: [
+          		if composite.spec.parameters.tags != _|_ // explicit error (_|_ literal) in source
+          		{
+          		composite.spec.parameters.tags
+          	}, {}][0]
+          response: desired: resources: main: resource: {
+          	apiVersion: "s3.aws.upbound.io/v1beta1"
+          	kind:       "Bucket"
+          	metadata: name: compName
+          	spec: forProvider: {
+          		forceDestroy: true
+          		region:       composite.spec.parameters.region
+          		tags:         tagValues
+          	}
+          }
+          suffixes: [
+          		if spec.parameters.additionalSuffixes != _|_ // explicit error (_|_ literal) in source
+          		{
+          		spec.parameters.additionalSuffixes
+          	}, []][0]
+        debugNew: true
     - step: run auto ready
       functionRef:
         name: fn-auto-ready
