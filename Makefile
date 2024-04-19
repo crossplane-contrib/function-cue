@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-image?=gotwarlost/crossplane-function-cue
+image?=xpkg.upbound.io/crossplane-contrib/function-cue
 
 build_date:=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 commit:=$(shell git rev-parse --short HEAD 2> /dev/null)
