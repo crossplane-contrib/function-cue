@@ -90,8 +90,3 @@ how the composition works. A detailed walkthrough can be found in the [README](e
 ## License
 
 The code is distributed under the Apache 2 license. See the [LICENSE](LICENSE) file for details.
-
-## A note about copyright notices
-
-The original code was first open-sourced by Elastic under their org and contains copyright notices to this effect.
-New code and changes follows the process for contributions for the crossplane-contrib org and does not need them.
