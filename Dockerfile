@@ -20,15 +20,12 @@ ARG TARGETARCH
 RUN --mount=target=. \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="${LDFLAGS}" -o /function ./cmd/xp-function-cue
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -ldflags="${LDFLAGS}" -o /function ./
 
 # produce the function image.
 FROM gcr.io/distroless/base-debian11 AS image
 WORKDIR /
 COPY --from=build /function ./
-COPY NOTICE.txt ./
-COPY DEPENDENCIES.md ./
-COPY LICENSE ./
 EXPOSE 9443
 USER nonroot:nonroot
-ENTRYPOINT ["/function", "server"]
+ENTRYPOINT ["/function"]

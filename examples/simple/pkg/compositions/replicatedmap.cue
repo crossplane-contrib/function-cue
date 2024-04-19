@@ -2,7 +2,6 @@ package compositions
 
 import (
 	xp "github.com/crossplane/crossplane/apis/apiextensions/v1"
-	fn "github.com/elastic/crossplane-function-cue/pkg/input/v1beta1"
 	schemas "cue-functions.io/examples/simple/zz_generated/schemas"
 	scripts "cue-functions.io/examples/simple/zz_generated/scripts"
 )
@@ -59,14 +58,12 @@ _compositions: replicatedMap: xp.#Composition & {
 			{
 				step: "run cue composition"
 				functionRef: name: "fn-cue-examples-simple"
-				input: fn.#CueFunctionParams & {
+				input: {
 					apiVersion: "function-cue/v1"  // value does not matter
 					kind:       "CueFunctionInput" // ditto
-					spec: {
-						source:   "Inline"
-						script:   scripts.replicatedmap
-						debugNew: true
-					}
+					source:     "Inline"
+					script:     scripts.replicatedmap
+					debugNew:   true
 				}
 			},
 			{

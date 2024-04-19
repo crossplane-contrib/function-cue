@@ -11,7 +11,7 @@ _functions: cuefn: xp.#Function & {
 		name: "fn-cue-examples-simple"
 	}
 	spec: {
-		package:           string | *"gotwarlost/crossplane-function-cue:latest" @tag(image)
+		package:           string | *"docker.io/gotwarlost/function-cue:test" @tag(image)
 		packagePullPolicy: "Always"
 	}
 }

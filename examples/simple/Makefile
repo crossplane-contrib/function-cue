@@ -20,21 +20,21 @@ SHELL=bash
 CUE_VERSION?=v0.7.0
 DYFF_VERSION?=v1.7.0
 
-FN_CUE_VERSION?=latest
-FN_IMAGE:=docker.io/gotwarlost/crossplane-function-cue
+FN_CUE_VERSION?=test
+FN_IMAGE:=docker.io/gotwarlost/function-cue
 
 MAKE=make --no-print-directory
 
 CUE=./.bin/cue
 DYFF=./.bin/dyff
-XP_FUNCTION_CUE=./.bin/xp-function-cue
+FN_CUE_TOOLS=./.bin/fn-cue-tools
 
 XP_LOCAL_CONTEXT?=kind
 
 export GOBIN=$(shell pwd)/.bin
 export PATH:=$(GOBIN):$(PATH)
 export DYFF_OPTS=--color on --truecolor off
-export XP_FUNCTION_CUE_DIFF:=dyff between --omit-header
+export FUNCTION_CUE_DIFF:=dyff between --omit-header
 
 COMPOSITIONS:=$(shell cd pkg/compositions/ && ls -d */ | sed 's|/||')
 
@@ -55,7 +55,7 @@ lib: $(CUE) ## generate all libraries
 	@set -e;for lib in $$(cat .cuelibs); do echo $$lib >&2; cue get go $$lib; done
 
 .PHONY: schemas
-schemas: $(XP_FUNCTION_CUE) ## generate schemas
+schemas: $(FN_CUE_TOOLS) ## generate schemas
 	@echo generating schemas... >&2
 	@mkdir -p ./zz_generated/schemas
 	@xp-function-cue openapi --pkg schemas ./pkg/api | \
@@ -63,7 +63,7 @@ schemas: $(XP_FUNCTION_CUE) ## generate schemas
 		cue fmt -s - >./zz_generated/schemas/generated-schemas.cue
 
 .PHONY: scripts
-scripts: $(XP_FUNCTION_CUE) ## generate scripts
+scripts: $(FN_CUE_TOOLS) ## generate scripts
 	@echo generating scripts... >&2
 	@mkdir -p ./zz_generated/scripts
 	@set -e;for c in $(COMPOSITIONS); do \
@@ -71,11 +71,11 @@ scripts: $(XP_FUNCTION_CUE) ## generate scripts
   	done
 
 .PHONY: test
-test: $(XP_FUNCTION_CUE) $(DYFF) ## run cue tests
+test: $(FN_CUE_TOOLS) $(DYFF) ## run cue tests
 	@echo running tests... >&2
 	@set -e; for c in $(COMPOSITIONS); do \
   		echo $$c; \
-  		xp-function-cue cue-test --test-dir ./tests/compositions/$$c ./pkg/compositions/$$c; \
+  		$(FN_CUE_TOOLS) cue-test --test-dir ./tests/compositions/$$c ./pkg/compositions/$$c; \
   	done
 
 .PHONY: format
@@ -129,8 +129,8 @@ clean: $(CUE) ## cleans all generated files
 $(CUE):
 	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
 
-$(XP_FUNCTION_CUE):
-	go install github.com/elastic/crossplane-function-cue/cmd/xp-function-cue@$(FN_CUE_VERSION)
+$(FN_CUE_TOOLS):
+	go install github.com/crossplane-contrib/function-cue/cmd/fn-cue-tools
 
 $(DYFF):
 	go install github.com/homeport/dyff/cmd/dyff@$(DYFF_VERSION)

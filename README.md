@@ -1,23 +1,19 @@
-# crossplane-function-cue
+# function-cue
 
-A crossplane function that runs cue scripts for composing resources.
+A crossplane function that runs cue scripts for composing resources. 
+Contributed by [Elastic](https://github.com/elastic) from their [initial implementation](https://github.com/elastic/crossplane-function-cue).
 
 #### Build status
 
-![go build](https://github.com/elastic/crossplane-function-cue/actions/workflows/go-build.yaml/badge.svg?branch=main)
-![docker build-push](https://github.com/elastic/crossplane-function-cue/actions/workflows/docker-build-push.yaml/badge.svg?branch=main)
-![check notices](https://github.com/elastic/crossplane-function-cue/actions/workflows/check-notices.yaml/badge.svg?branch=main)
-![check license headers](https://github.com/elastic/crossplane-function-cue/actions/workflows/check-license-headers.yaml/badge.svg?branch=main)
-
-[![Go Report Card](https://goreportcard.com/badge/github.com/elastic/crossplane-function-cue)](https://goreportcard.com/report/github.com/elastic/crossplane-function-cue)
-[![Go Coverage](https://github.com/elastic/crossplane-function-cue/wiki/coverage.svg)](https://raw.githack.com/wiki/elastic/crossplane-function-cue/coverage.html)
+![go build](https://github.com/crossplane-contrib/crossplane-function-cue/actions/workflows/go-build.yaml/badge.svg?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/crossplane-function-cue)](https://goreportcard.com/report/github.com/elastic/crossplane-function-cue)
+[![Go Coverage](https://github.com/crossplane-contrib/crossplane-function-cue/wiki/coverage.svg)](https://raw.githack.com/wiki/elastic/crossplane-function-cue/coverage.html)
 
 ## Building
 
 ```shell
 $ make # generate input, compile, test, lint
 $ make docker # build docker image
-$ make docker-push # push docker image
 ```
 
 ## Function interface
@@ -29,8 +25,7 @@ kind: Function
 metadata:
   name: fn-cue
 spec:
-  package: gotwarlost/crossplane-function-cue:latest
-  packagePullPolicy: Always
+  package: crossplane-contrib/function-cue:version
 ```
 
 and reference it in a composition as follows:
@@ -55,16 +50,13 @@ The full spec of the input object can be [found here](pkg/input/v1beta1/input.go
 
 ## The Go code
 
-The program `xp-function-cue` provides the following subcommands:
+The [main program](main.go) at the root of the repo provides the function implementation.
 
-* `server` - used by the docker image to run the function implementation
+The program [fn-cue-tools](cmd/fn-cue-tools) provides additional support tooling with the following subcommands.
+
 * `openapi` - utility that converts a cue type into an openAPI schema that has self-contained types.
+* `extract-schema` - convert an existing openAPI schema found in a CRD/ XRD YAML to cue.
 * `package-script` - utility that takes a cue package and turns it into a self-contained cue script of the form:
-
-```
-  "_script": "script text"
-```
-
 * `cue-test` - utility to unit test your cue implementation using inputs from various stages of the composition lifecycle.
 
 ## The cue script
@@ -95,7 +87,15 @@ The names of the request and response objects are configurable in the function i
 See the [example implementation](examples/simple/platform/compositions/xs3bucket/runtime/) to get a sense of 
 how the composition works. A detailed walkthrough can be found in the [README](examples/simple/) for the example.
 
+## Debug output for specific XRs
+
+The function can produce debug output in terms of showing requests and responses in the pod logs, which is also
+useful for setting up unit tests. You can enable debugging per-XR by annotating it as follows:
+
+```
+cue.fn.crossplane.io/debug=true
+```
+
 ## License
 
 The code is distributed under the Apache 2 license. See the [LICENSE](LICENSE) file for details.
-

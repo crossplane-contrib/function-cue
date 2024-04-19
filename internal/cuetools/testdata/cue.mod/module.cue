@@ -1,1 +1,1 @@
-module: "github.com/elastic/crossplane-function-cue/testdata"
+module: "github.com/crossplane-contrib/function-cue/testdata"
