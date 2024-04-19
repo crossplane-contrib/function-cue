@@ -23,6 +23,5 @@ import (
 	_ "github.com/crossplane/crossplane/apis/apiextensions/fn/proto/v1beta1"
 	_ "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	_ "github.com/crossplane/crossplane/apis/pkg/v1beta1"
-	_ "github.com/elastic/crossplane-function-cue/pkg/input/v1beta1"
 	_ "k8s.io/api/core/v1"
 )

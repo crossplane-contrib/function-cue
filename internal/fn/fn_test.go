@@ -44,7 +44,7 @@ func makeRequest(t *testing.T) *fnv1beta1.RunFunctionRequest {
 				"apiVersion": "v1",
 				"kind": "MyKind",
 				"metadata": {
-					"annotations": { "crossplane-function-cue/debug": "true" }
+					"annotations": { "function-cue/debug": "true" }
 				},
 				"foo": "bar" 
 			},

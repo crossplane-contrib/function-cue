@@ -21,7 +21,7 @@ CUE_VERSION?=v0.7.0
 DYFF_VERSION?=v1.7.0
 
 FN_CUE_VERSION?=test
-FN_IMAGE:=docker.io/gotwarlost/crossplane-function-cue
+FN_IMAGE:=docker.io/gotwarlost/function-cue
 
 MAKE=make --no-print-directory
 

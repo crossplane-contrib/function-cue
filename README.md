@@ -1,13 +1,13 @@
-# crossplane-function-cue
+# function-cue
 
 A crossplane function that runs cue scripts for composing resources. 
 Contributed by [Elastic](https://github.com/elastic) from their [initial implementation](https://github.com/elastic/crossplane-function-cue).
 
 #### Build status
 
-![go build](https://github.com/elastic/crossplane-function-cue/actions/workflows/go-build.yaml/badge.svg?branch=main)
-[![Go Report Card](https://goreportcard.com/badge/github.com/elastic/crossplane-function-cue)](https://goreportcard.com/report/github.com/elastic/crossplane-function-cue)
-[![Go Coverage](https://github.com/elastic/crossplane-function-cue/wiki/coverage.svg)](https://raw.githack.com/wiki/elastic/crossplane-function-cue/coverage.html)
+![go build](https://github.com/crossplane-contrib/crossplane-function-cue/actions/workflows/go-build.yaml/badge.svg?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/crossplane-function-cue)](https://goreportcard.com/report/github.com/elastic/crossplane-function-cue)
+[![Go Coverage](https://github.com/crossplane-contrib/crossplane-function-cue/wiki/coverage.svg)](https://raw.githack.com/wiki/elastic/crossplane-function-cue/coverage.html)
 
 ## Building
 

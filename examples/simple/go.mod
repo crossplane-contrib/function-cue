@@ -4,7 +4,6 @@ go 1.21
 
 require (
 	github.com/crossplane/crossplane v1.14.0
-	github.com/elastic/crossplane-function-cue v0.1.8
 	k8s.io/api v0.28.3
 )
 
@@ -32,6 +31,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect

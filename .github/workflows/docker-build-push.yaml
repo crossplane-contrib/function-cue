@@ -13,7 +13,7 @@ env:
   XP_CHANNEL: master
   XP_VERSION: current
   XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
-  XPKG: index.docker.io/gotwarlost/crossplane-function-cue
+  XPKG: xpkg.upbound.io/${{ github.repository}}
 
 jobs:
   build:
