@@ -46,7 +46,7 @@ and reference it in a composition as follows:
           debug: true  
 ```
 
-The full spec of the input object can be [found here](pkg/input/v1beta1/input.go)
+The full spec of the input object can be [found here](input/v1beta1/input.go)
 
 ## The Go code
 
@@ -79,12 +79,12 @@ returned resources. If a composite is returned, it will also be set in the respo
 `status` of the composite resource.
 
 (*) Note that it is not necessary for the cue source code to be in a single file. It can span multiple files in a single
-package and depend on other packages. You use the `package-script` sub-command of `xp-function-cue` to create the
+package and depend on other packages. You use the `package-script` sub-command of `fn-cue-tools` to create the
 self-contained script. This, in turn, uses `cue def --inline-imports` under the covers.
 
 The names of the request and response objects are configurable in the function input.
 
-See the [example implementation](examples/simple/platform/compositions/xs3bucket/runtime/) to get a sense of 
+See the [example implementation](examples/simple/pkg/compositions/s3bucket) to get a sense of 
 how the composition works. A detailed walkthrough can be found in the [README](examples/simple/) for the example.
 
 ## Debug output for specific XRs

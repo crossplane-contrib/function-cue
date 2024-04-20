@@ -58,7 +58,7 @@ lib: $(CUE) ## generate all libraries
 schemas: $(FN_CUE_TOOLS) ## generate schemas
 	@echo generating schemas... >&2
 	@mkdir -p ./zz_generated/schemas
-	@xp-function-cue openapi --pkg schemas ./pkg/api | \
+	@$(FN_CUE_TOOLS) openapi --pkg schemas ./pkg/api | \
 		sed 's/additionalProperties: {}/additionalProperties: true,\n "x-kubernetes-preserve-unknown-fields": true/g' | \
 		cue fmt -s - >./zz_generated/schemas/generated-schemas.cue
 
@@ -67,7 +67,7 @@ scripts: $(FN_CUE_TOOLS) ## generate scripts
 	@echo generating scripts... >&2
 	@mkdir -p ./zz_generated/scripts
 	@set -e;for c in $(COMPOSITIONS); do \
-  		xp-function-cue package-script --pkg scripts --var $$c --out-file ./zz_generated/scripts/$$c.cue ./pkg/compositions/$$c; \
+  		$(FN_CUE_TOOLS) package-script --pkg scripts --var $$c --out-file ./zz_generated/scripts/$$c.cue ./pkg/compositions/$$c; \
   	done
 
 .PHONY: test

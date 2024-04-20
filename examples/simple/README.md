@@ -34,10 +34,13 @@ The `Makefile` has all the commands used for the generation.
     definitions and their implementation.
       * [s3bucket/](pkg/compositions/s3bucket/) - composition implementation for the S3 bucket XRD.
       * [s3bucket.cue](pkg/compositions/s3bucket.cue) - XRD and composition definition for the S3 bucket.
+      * [replicatedmap/](pkg/compositions/replicatedmap/) - composition implementation for the replicated config map.
+      * [replicatedmap.cue](pkg/compositions/replicatedmap.cue) - XRD and composition definition for the replicated config map.
       * [index.cue](pkg/compositions/index.cue) - returns all XRDs and composition definitions. 
   * [resources.cue](pkg/resources.cue) - returns all XRDS, composition definitions and function definitions. 
 * [tests/](tests/) - unit test files
-  * [compositions/s3/bucket/](tests/compositions/s3bucket/) - unit test file for the S3 bucket composition
+  * [compositions/s3bucket/](tests/compositions/s3bucket/) - unit test file for the S3 bucket composition
+  * [compositions/replicatedmap/](tests/compositions/replicatedmap/) - unit test file for the replicated config map composition
 * [user](user/) - the "user" objects like namespaces and test claims.
 * [zz_generated/](zz_generated/) - root for all generated files
   * [schemas/generated-schemas.cue](zz_generated/schemas/generated-schemas.cue) - schemas for XRDs generated from `pkg/api/`
@@ -92,7 +95,7 @@ ready state and status, one for the secondary buckets, and another for the IAM p
 
 ### Unit tests
 
-`xp-function-cue` has a subcommand called `cue-test` that allows you to write unit tests for various inputs and outputs.
+`fn-cue-tools` has a subcommand called `cue-test` that allows you to write unit tests for various inputs and outputs.
 This is _extremely_ primitive but still very useful. 
 
 This works as follows:
@@ -105,8 +108,8 @@ This works as follows:
 * In this test file you define the `_request` object fully (by copying it from the pod logs) and write what the
   response to the request should be. You can copy the response from the function's pod logs as well if you have already
   implemented something and have manually checked the output.
-* When you run `xp-function-cue cue-test --test-dir ./tests/compositions/s3bucket --pkg ./pkg/compositions/s3bucket` it does the following:
-  * creates a self-contained script from the code package just like `xp-function-cue package-script` would do.
+* When you run `fn-cue-tools cue-test --test-dir ./tests/compositions/s3bucket --pkg ./pkg/compositions/s3bucket` it does the following:
+  * creates a self-contained script from the code package just like `fn-cue-tools package-script` would do.
   * figures out the tags for tests using the file names in the `tests/` directory
   * for each such tag:
     * it evaluates the `tests` subdirectory with that tag turned on and extracts the `_request` object from it.
