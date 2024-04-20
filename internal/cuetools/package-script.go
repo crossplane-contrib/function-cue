@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const generator = "xp-function-cue"
+const generator = "fn-cue-tools"
 
 // runDefCommand runs the equivalent of `cue def` using the cue command library instead of forking a cue process.
 // The semantics of doing this are iffy at best - it is generally unsafe to do this more than once in a single process
