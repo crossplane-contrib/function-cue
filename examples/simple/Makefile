@@ -20,8 +20,8 @@ SHELL=bash
 CUE_VERSION?=v0.7.0
 DYFF_VERSION?=v1.7.0
 
-FN_CUE_VERSION?=test
-FN_IMAGE:=docker.io/gotwarlost/function-cue
+FN_CUE_VERSION?=v0.2.0
+FN_IMAGE:=xpkg.upbound.io/crossplane-contrib/function-cue
 
 MAKE=make --no-print-directory
 
