@@ -1,7 +1,7 @@
 metadata:
   name: fn-cue-examples-simple
 spec:
-  package: docker.io/gotwarlost/function-cue:test
+  package: xpkg.upbound.io/crossplane-contrib/function-cue:v0.2.0
   packagePullPolicy: Always
 kind: Function
 apiVersion: pkg.crossplane.io/v1beta1
