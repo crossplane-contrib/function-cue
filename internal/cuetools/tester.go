@@ -183,7 +183,7 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		}
 	}()
 
-	requestVar := "request"
+	requestVar := "#request"
 	if t.config.RequestVar != "" {
 		requestVar = t.config.RequestVar
 	}
@@ -199,7 +199,13 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 	}
 
 	var expected fnv1beta1.RunFunctionResponse
-	err := evalPackage(t.config.TestPackage, tag, responseVar, &expected)
+	var err error
+	if t.config.LegacyDesiredOnlyResponse {
+		expected.Desired = &fnv1beta1.State{}
+		err = evalPackage(t.config.TestPackage, tag, responseVar, expected.Desired)
+	} else {
+		err = evalPackage(t.config.TestPackage, tag, responseVar, &expected)
+	}
 	if err != nil {
 		return errors.Wrap(err, "evaluate expected")
 	}
@@ -210,12 +216,13 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		return errors.Wrap(err, "evaluate request")
 	}
 
-	actual, err := f.Eval(&req, string(codeBytes), fn.EvalOptions{
+	opts := fn.EvalOptions{
 		RequestVar:          requestVar,
 		ResponseVar:         responseVar,
 		DesiredOnlyResponse: t.config.LegacyDesiredOnlyResponse,
 		Debug:               fn.DebugOptions{Enabled: t.config.Debug},
-	})
+	}
+	actual, err := f.Eval(&req, string(codeBytes), opts)
 	if err != nil {
 		return errors.Wrap(err, "evaluate package with test request")
 	}
