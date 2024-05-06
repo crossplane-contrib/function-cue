@@ -56,7 +56,48 @@ func TestTester(t *testing.T) {
 		Package: "./runtime",
 	})
 	require.NoError(t, err)
-	envDiff := "XP_FUNCTION_CUE_DIFF"
+	envDiff := ExternalDiffEnvVar
+	diffProgram := os.Getenv(envDiff)
+	if diffProgram != "" {
+		err = os.Unsetenv(envDiff) // we expect a specific diff format
+		require.NoError(t, err)
+		defer func() { _ = os.Setenv(envDiff, diffProgram) }()
+	}
+	err = tester.Run()
+	expected := `
+running test tags: correct, incorrect
+> run test "correct"
+PASS correct
+> run test "incorrect"
+diffs found:
+--- expected
++++ actual
+@@ -3,5 +3,5 @@
+     main:
+       resource:
+         bar: baz
+-        foo: bar
++        foo: foo2
+FAIL incorrect: expected did not match actual
+`
+	require.Error(t, err)
+	assert.Equal(t, "1 of 2 tests had errors", err.Error())
+	assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buf.String()))
+}
+
+func TestTesterLegacyOptions(t *testing.T) {
+	fn := chdirCueRoot(t)
+	defer fn()
+	buf, reset := getOutput()
+	defer reset()
+	tester, err := NewTester(TestConfig{
+		Package:                   "./runtime2",
+		RequestVar:                "_request",
+		ResponseVar:               ".",
+		LegacyDesiredOnlyResponse: true,
+	})
+	require.NoError(t, err)
+	envDiff := ExternalDiffEnvVar
 	diffProgram := os.Getenv(envDiff)
 	if diffProgram != "" {
 		err = os.Unsetenv(envDiff) // we expect a specific diff format

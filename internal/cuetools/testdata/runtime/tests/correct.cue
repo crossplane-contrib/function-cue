@@ -1,7 +1,7 @@
 @if(correct)
 package tests
 
-request: observed: composite: resource: {
+#request: observed: composite: resource: {
 	foo: "bar"
 }
 
