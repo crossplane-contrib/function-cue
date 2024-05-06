@@ -131,7 +131,11 @@ func (f *Cue) Eval(in *fnv1beta1.RunFunctionRequest, script string, opts EvalOpt
 		return nil, errors.Wrap(err, "marshal cue output")
 	}
 	if opts.Debug.Enabled {
-		log.Printf("[response:begin]\n%s\n[response:end]\n", f.getDebugString(resBytes, opts.Debug.Raw))
+		preamble = ""
+		if opts.ResponseVar != "" {
+			preamble = opts.ResponseVar + ":"
+		}
+		log.Printf("[response:begin]\n%s %s\n[response:end]\n", preamble, f.getDebugString(resBytes, opts.Debug.Raw))
 	}
 
 	var ret fnv1beta1.RunFunctionResponse
