@@ -47,7 +47,6 @@ EOF
 
 echo "setting up cluster role bindings for the k8s provider"
 ${RUN_KUBECTL} create clusterrolebinding provider-kubernetes-admin-binding \
- --clusterrole cluster-admin --serviceaccount="${XP_PROVIDER_K8S_VERSION}:crossplane-provider-kubernetes" \
+ --clusterrole cluster-admin --serviceaccount="${XP_CROSSPLANE_NS}:crossplane-provider-kubernetes" \
  --dry-run=client -o yaml \
  | ${RUN_KUBECTL} apply -f -
-
