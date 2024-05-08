@@ -29,7 +29,7 @@ CUE=./.bin/cue
 DYFF=./.bin/dyff
 FN_CUE_TOOLS=./.bin/fn-cue-tools
 
-XP_LOCAL_CONTEXT?=kind
+XP_LOCAL_CONTEXT?=kind-kind
 
 export GOBIN=$(shell pwd)/.bin
 export PATH:=$(GOBIN):$(PATH)
