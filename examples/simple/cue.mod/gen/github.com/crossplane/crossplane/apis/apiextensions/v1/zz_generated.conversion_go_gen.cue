@@ -4,5 +4,4 @@
 
 package v1
 
-#GeneratedRevisionSpecConverter: {
-}
+#GeneratedRevisionSpecConverter: {}
