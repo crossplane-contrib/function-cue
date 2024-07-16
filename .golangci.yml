@@ -28,7 +28,6 @@ linters:
     - unconvert
     - unparam
     - unused
-    - vet
 
 run:
   timeout: 10m

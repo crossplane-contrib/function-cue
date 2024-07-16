@@ -17,8 +17,7 @@ package v1beta1
 #FunctionRunnerServiceServer: _
 
 // UnimplementedFunctionRunnerServiceServer must be embedded to have forward compatible implementations.
-#UnimplementedFunctionRunnerServiceServer: {
-}
+#UnimplementedFunctionRunnerServiceServer: {}
 
 // UnsafeFunctionRunnerServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to FunctionRunnerServiceServer will
