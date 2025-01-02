@@ -29,7 +29,7 @@ import (
 	input "github.com/crossplane-contrib/function-cue/input/v1beta1"
 	"github.com/crossplane/crossplane-runtime/pkg/logging"
 	"github.com/crossplane/function-sdk-go"
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/response"
 	"github.com/pkg/errors"
@@ -47,7 +47,7 @@ type Options struct {
 
 // Cue runs cue scripts that adhere to a specific interface.
 type Cue struct {
-	fnv1beta1.UnimplementedFunctionRunnerServiceServer
+	fnv1.UnimplementedFunctionRunnerServiceServer
 	log   logging.Logger
 	debug bool
 }
@@ -83,9 +83,9 @@ type EvalOptions struct {
 
 // Eval evaluates the supplied script with an additional script that includes the supplied request and returns the
 // response.
-func (f *Cue) Eval(in *fnv1beta1.RunFunctionRequest, script string, opts EvalOptions) (*fnv1beta1.RunFunctionResponse, error) {
+func (f *Cue) Eval(in *fnv1.RunFunctionRequest, script string, opts EvalOptions) (*fnv1.RunFunctionResponse, error) {
 	// input request only contains properties as documented in the interface, not the whole object
-	req := &fnv1beta1.RunFunctionRequest{
+	req := &fnv1.RunFunctionRequest{
 		Observed: in.GetObserved(),
 		Desired:  in.GetDesired(),
 		Context:  in.GetContext(),
@@ -138,9 +138,9 @@ func (f *Cue) Eval(in *fnv1beta1.RunFunctionRequest, script string, opts EvalOpt
 		log.Printf("[response:begin]\n%s %s\n[response:end]\n", preamble, f.getDebugString(resBytes, opts.Debug.Raw))
 	}
 
-	var ret fnv1beta1.RunFunctionResponse
+	var ret fnv1.RunFunctionResponse
 	if opts.DesiredOnlyResponse {
-		var state fnv1beta1.State
+		var state fnv1.State
 		err = protojson.Unmarshal(resBytes, &state)
 		if err == nil {
 			ret.Desired = &state
@@ -156,7 +156,7 @@ func (f *Cue) Eval(in *fnv1beta1.RunFunctionRequest, script string, opts EvalOpt
 
 // RunFunction runs the function. It expects a single script that is complete, except for a request
 // variable that the function runner supplies.
-func (f *Cue) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) (outRes *fnv1beta1.RunFunctionResponse, finalErr error) {
+func (f *Cue) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (outRes *fnv1.RunFunctionResponse, finalErr error) {
 	// setup response with desired state set up upstream functions
 	res := response.To(req, response.DefaultTTL)
 
@@ -237,13 +237,13 @@ func (f *Cue) RunFunction(_ context.Context, req *fnv1beta1.RunFunctionRequest) 
 	return f.mergeResponse(res, state)
 }
 
-func (f *Cue) mergeResponse(res *fnv1beta1.RunFunctionResponse, cueResponse *fnv1beta1.RunFunctionResponse) (*fnv1beta1.RunFunctionResponse, error) {
+func (f *Cue) mergeResponse(res *fnv1.RunFunctionResponse, cueResponse *fnv1.RunFunctionResponse) (*fnv1.RunFunctionResponse, error) {
 	// selectively add returned resources without deleting any previous desired state
 	if res.Desired == nil {
-		res.Desired = &fnv1beta1.State{}
+		res.Desired = &fnv1.State{}
 	}
 	if res.Desired.Resources == nil {
-		res.Desired.Resources = map[string]*fnv1beta1.Resource{}
+		res.Desired.Resources = map[string]*fnv1.Resource{}
 	}
 	// only set desired composite if the cue script actually returns it
 	// TODO: maybe use fieldpath.Pave to only extract status

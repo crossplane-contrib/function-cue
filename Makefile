@@ -33,7 +33,7 @@ local: build test lint
 
 .bin/golangci-lint:
 	mkdir -p ./.bin
-	GOBIN="$$(pwd)/.bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+	GOBIN="$$(pwd)/.bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.2
 
 .PHONY: build
 build:
