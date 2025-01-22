@@ -5,7 +5,7 @@ go 1.23
 toolchain go1.23.1
 
 require (
-	cuelang.org/go v0.11.1
+	cuelang.org/go v0.11.2
 	github.com/alecthomas/kong v0.9.0
 	github.com/crossplane/crossplane-runtime v1.18.0
 	github.com/crossplane/function-sdk-go v0.4.0
