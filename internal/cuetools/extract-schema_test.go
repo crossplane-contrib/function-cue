@@ -42,19 +42,21 @@ info: {
 // allow creation of one of more S3 buckets
 #XS3BucketV1alpha1: {
 	// desired state
-	spec: {
+	spec!: {
 		// bucket creation parameters
-		parameters: {
+		parameters!: {
 			// additional buckets to create with the suffixes provided
-			additionalSuffixes?: [...strings.MaxRunes(4) & strings.MinRunes(1)]
+			additionalSuffixes?: [...strings.MaxRunes(
+				4) & strings.MinRunes(
+				1)]
 
 			// bucket region
-			region: string
+			region!: string
 
 			// tags to associate with all buckets
-			tags?: {
+			tags?: close({
 				[string]: string
-			}
+			})
 			...
 		}
 		...

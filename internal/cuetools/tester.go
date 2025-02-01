@@ -30,7 +30,7 @@ import (
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/parser"
 	"github.com/crossplane-contrib/function-cue/internal/fn"
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -198,10 +198,10 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		responseVar = t.config.ResponseVar
 	}
 
-	var expected fnv1beta1.RunFunctionResponse
+	var expected fnv1.RunFunctionResponse
 	var err error
 	if t.config.LegacyDesiredOnlyResponse {
-		expected.Desired = &fnv1beta1.State{}
+		expected.Desired = &fnv1.State{}
 		err = evalPackage(t.config.TestPackage, tag, responseVar, expected.Desired)
 	} else {
 		err = evalPackage(t.config.TestPackage, tag, responseVar, &expected)
@@ -210,7 +210,7 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		return errors.Wrap(err, "evaluate expected")
 	}
 
-	var req fnv1beta1.RunFunctionRequest
+	var req fnv1.RunFunctionRequest
 	err = evalPackage(t.config.TestPackage, tag, requestVar, &req)
 	if err != nil {
 		return errors.Wrap(err, "evaluate request")

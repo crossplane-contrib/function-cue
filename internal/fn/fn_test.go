@@ -27,14 +27,14 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	fnv1beta1 "github.com/crossplane/function-sdk-go/proto/v1beta1"
+	fnv1 "github.com/crossplane/function-sdk-go/proto/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func makeRequest(t *testing.T) *fnv1beta1.RunFunctionRequest {
-	var req fnv1beta1.RunFunctionRequest
+func makeRequest(t *testing.T) *fnv1.RunFunctionRequest {
+	var req fnv1.RunFunctionRequest
 	reqJSON := `
 {
 	"meta": { "tag": "v1" },
@@ -185,10 +185,10 @@ func TestMergeResponse(t *testing.T) {
 	}
 }
 `
-	var cueRes fnv1beta1.RunFunctionResponse
+	var cueRes fnv1.RunFunctionResponse
 	err := protojson.Unmarshal([]byte(responseJSON), &cueRes)
 	require.NoError(t, err)
-	var res fnv1beta1.RunFunctionResponse
+	var res fnv1.RunFunctionResponse
 	f, err := New(Options{})
 	require.NoError(t, err)
 	_, err = f.mergeResponse(&res, &cueRes)
@@ -234,10 +234,10 @@ func TestMergeResponseWithExisting(t *testing.T) {
 	}
 }
 `
-	var cueRes fnv1beta1.RunFunctionResponse
+	var cueRes fnv1.RunFunctionResponse
 	err := protojson.Unmarshal([]byte(responseJSON), &cueRes)
 	require.NoError(t, err)
-	var res fnv1beta1.RunFunctionResponse
+	var res fnv1.RunFunctionResponse
 	err = protojson.Unmarshal([]byte(existingJSON), &res)
 	require.NoError(t, err)
 	f, err := New(Options{})
@@ -279,5 +279,5 @@ response: desired: resources: main: resource: {
 	b, err = protojson.Marshal(res)
 	require.NoError(t, err)
 	blanksRemoved := strings.ReplaceAll(string(b), " ", "")
-	assert.Equal(t, `{"meta":{"tag":"v1","ttl":"60s"},"desired":{"resources":{"main":{"resource":{"bar":"baz","foo":"bar"}}}},"results":[{"severity":"SEVERITY_NORMAL","message":"cuemoduleexecutedsuccessfully"}]}`, blanksRemoved)
+	assert.Equal(t, `{"meta":{"tag":"v1","ttl":"60s"},"desired":{"resources":{"main":{"resource":{"bar":"baz","foo":"bar"}}}},"results":[{"severity":"SEVERITY_NORMAL","message":"cuemoduleexecutedsuccessfully","target":"TARGET_COMPOSITE"}]}`, blanksRemoved)
 }

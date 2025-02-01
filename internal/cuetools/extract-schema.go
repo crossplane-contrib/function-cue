@@ -48,7 +48,8 @@ type expectedXRD struct {
 }
 
 type openapiSchema struct {
-	Info struct {
+	OpenAPI string `json:"openapi"`
+	Info    struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
 	} `json:"info"`
@@ -76,6 +77,7 @@ func ExtractSchema(reader io.Reader, pkg string) ([]byte, error) {
 	out := bytes.NewBufferString(pkgDecl)
 	for _, version := range xrd.Spec.Versions {
 		var cueSchema openapiSchema
+		cueSchema.OpenAPI = "3.0.0"
 		cueSchema.Info.Title = "generated cue schema"
 		v := version.Name
 		if len(v) > 0 {
