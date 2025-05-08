@@ -9,7 +9,7 @@ on:
 
 env:
   GO_VERSION: '1.23.1'
-  DOCKER_BUILDX_VERSION: 'v0.21.0'
+  DOCKER_BUILDX_VERSION: 'v0.22.0'
   XP_CHANNEL: master
   XP_VERSION: current
   XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
