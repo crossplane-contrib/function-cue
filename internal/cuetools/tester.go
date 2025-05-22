@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/load"
 	"cuelang.org/go/cue/parser"
 	"github.com/crossplane-contrib/function-cue/internal/fn"
@@ -51,6 +52,32 @@ type TestConfig struct {
 
 type Tester struct {
 	config *TestConfig
+}
+
+type assertionMode string
+
+const (
+	AssertionModeDiff        assertionMode = "diff"
+	AssertionModeUnification assertionMode = "unification"
+)
+
+type ErrUnknownAssertionMode struct {
+	Mode string
+}
+
+func (e *ErrUnknownAssertionMode) Error() string {
+	return fmt.Sprintf("unknown assertion mode: %s", e.Mode)
+}
+
+func assertionModeFromString(mode string) (assertionMode, error) {
+	switch mode {
+	case "diff":
+		return AssertionModeDiff, nil
+	case "unification":
+		return AssertionModeUnification, nil
+	default:
+		return "", &ErrUnknownAssertionMode{Mode: mode}
+	}
 }
 
 // NewTester returns a test for the supplied configuration. It auto-discovers tags from test file names if needed.
@@ -102,16 +129,17 @@ func (t *Tester) discoverTags() error {
 	return nil
 }
 
-func evalPackage(pkg string, tag string, expr string, into proto.Message) (finalErr error) {
+func evalPackage(pkg string, tag string, expr string, into proto.Message) (cue.Value, error) {
 	iv, err := loadSingleInstanceValue(pkg, &load.Config{Tags: []string{tag}})
 	if err != nil {
-		return err
+		return cue.Value{}, err
 	}
+
 	val := iv.value
 	if expr != "" {
 		e, err := parser.ParseExpr("expression", expr)
 		if err != nil {
-			return errors.Wrap(err, "parse expression")
+			return val, errors.Wrap(err, "parse expression")
 		}
 		val = iv.value.Context().BuildExpr(e,
 			cue.Scope(iv.value),
@@ -119,18 +147,18 @@ func evalPackage(pkg string, tag string, expr string, into proto.Message) (final
 			cue.InferBuiltins(true),
 		)
 		if val.Err() != nil {
-			return errors.Wrap(val.Err(), "build expression")
+			return val, errors.Wrap(val.Err(), "build expression")
 		}
 	}
 	b, err := val.MarshalJSON()
 	if err != nil {
-		return errors.Wrap(err, "marshal json")
+		return val, errors.Wrap(err, "marshal json")
 	}
 	err = protojson.Unmarshal(b, into)
 	if err != nil {
-		return errors.Wrap(err, "proto unmarshal")
+		return val, errors.Wrap(err, "proto unmarshal")
 	}
-	return nil
+	return val, nil
 }
 
 // Run runs all tests and returns a consolidated error.
@@ -198,20 +226,21 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		responseVar = t.config.ResponseVar
 	}
 
+	var val cue.Value
 	var expected fnv1.RunFunctionResponse
 	var err error
 	if t.config.LegacyDesiredOnlyResponse {
 		expected.Desired = &fnv1.State{}
-		err = evalPackage(t.config.TestPackage, tag, responseVar, expected.Desired)
+		val, err = evalPackage(t.config.TestPackage, tag, responseVar, expected.Desired)
 	} else {
-		err = evalPackage(t.config.TestPackage, tag, responseVar, &expected)
+		val, err = evalPackage(t.config.TestPackage, tag, responseVar, &expected)
 	}
 	if err != nil {
 		return errors.Wrap(err, "evaluate expected")
 	}
 
 	var req fnv1.RunFunctionRequest
-	err = evalPackage(t.config.TestPackage, tag, requestVar, &req)
+	_, err = evalPackage(t.config.TestPackage, tag, requestVar, &req)
 	if err != nil {
 		return errors.Wrap(err, "evaluate request")
 	}
@@ -227,21 +256,57 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		return errors.Wrap(err, "evaluate package with test request")
 	}
 
-	expectedString, err := canonicalYAML(&expected)
+	expectedBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(&expected)
 	if err != nil {
-		return errors.Wrap(err, "serialize expected")
+		return errors.Wrap(err, "proto json marshal")
 	}
-	actualString, err := canonicalYAML(actual)
+	actualBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(actual)
 	if err != nil {
-		return errors.Wrap(err, "serialize actual")
-	}
-	if expectedString == actualString {
-		return nil
+		return errors.Wrap(err, "proto json marshal")
 	}
 
-	err = printDiffs(expectedString, actualString)
-	if err != nil {
-		_, _ = fmt.Fprintln(TestOutput, "error in running diff:", err)
+	assertionMode := AssertionModeDiff
+
+	attr := val.Attribute("assertionMode")
+	if attr.Err() == nil {
+		assertionMode, err = assertionModeFromString(attr.Contents())
+		if err != nil {
+			return err
+		}
 	}
-	return fmt.Errorf("expected did not match actual")
+
+	switch assertionMode {
+	case AssertionModeUnification:
+		assertionScript := fmt.Sprintf("expected: %s\n#Actual: %s\nunified: #Actual & expected\n", expectedBytes, actualBytes)
+
+		runtime := cuecontext.New()
+		assertVal := runtime.CompileString(assertionScript)
+		if assertVal.Err() != nil {
+			return errors.Wrap(assertVal.Err(), "compile cue code")
+		}
+
+		if _, err := assertVal.MarshalJSON(); err != nil {
+			return errors.Wrap(err, "marshal cue output")
+		}
+		// script compiles and marshals, so actual and expected are unifiable.
+	case AssertionModeDiff:
+		expectedString, err := canonicalYAML(&expected)
+		if err != nil {
+			return errors.Wrap(err, "serialize expected")
+		}
+		actualString, err := canonicalYAML(actual)
+		if err != nil {
+			return errors.Wrap(err, "serialize actual")
+		}
+		if expectedString == actualString {
+			return nil
+		}
+
+		err = printDiffs(expectedString, actualString)
+		if err != nil {
+			_, _ = fmt.Fprintln(TestOutput, "error in running diff:", err)
+		}
+		return fmt.Errorf("expected did not match actual")
+	}
+	return nil
 }
