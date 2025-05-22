@@ -129,7 +129,8 @@ func (t *Tester) discoverTags() error {
 	return nil
 }
 
-func evalPackage(pkg string, tag string, expr string, into proto.Message) (cue.Value, error) {
+// evalPackage evaluates a CUE package with a specific tag and returns the value of the given expression.
+func evalPackage(pkg string, tag string, expr string) (cue.Value, error) {
 	iv, err := loadSingleInstanceValue(pkg, &load.Config{Tags: []string{tag}})
 	if err != nil {
 		return cue.Value{}, err
@@ -150,15 +151,20 @@ func evalPackage(pkg string, tag string, expr string, into proto.Message) (cue.V
 			return val, errors.Wrap(val.Err(), "build expression")
 		}
 	}
+	return val, nil
+}
+
+// marshalValueIntoProtoMessage marshals a CUE value into a proto message.
+func marshalValueIntoProtoMessage(val cue.Value, into proto.Message) error {
 	b, err := val.MarshalJSON()
 	if err != nil {
-		return val, errors.Wrap(err, "marshal json")
+		return errors.Wrap(err, "marshal json")
 	}
 	err = protojson.Unmarshal(b, into)
 	if err != nil {
-		return val, errors.Wrap(err, "proto unmarshal")
+		return errors.Wrap(err, "proto unmarshal")
 	}
-	return val, nil
+	return nil
 }
 
 // Run runs all tests and returns a consolidated error.
@@ -226,23 +232,29 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		responseVar = t.config.ResponseVar
 	}
 
-	var val cue.Value
 	var expected fnv1.RunFunctionResponse
-	var err error
-	if t.config.LegacyDesiredOnlyResponse {
-		expected.Desired = &fnv1.State{}
-		val, err = evalPackage(t.config.TestPackage, tag, responseVar, expected.Desired)
-	} else {
-		val, err = evalPackage(t.config.TestPackage, tag, responseVar, &expected)
-	}
+	expectedVal, err := evalPackage(t.config.TestPackage, tag, responseVar)
 	if err != nil {
 		return errors.Wrap(err, "evaluate expected")
 	}
+	if t.config.LegacyDesiredOnlyResponse {
+		expected.Desired = &fnv1.State{}
+		if err := marshalValueIntoProtoMessage(expectedVal, expected.Desired); err != nil {
+			return errors.Wrap(err, "marshal expected")
+		}
+	} else {
+		if err := marshalValueIntoProtoMessage(expectedVal, &expected); err != nil {
+			return errors.Wrap(err, "marshal expected")
+		}
+	}
 
 	var req fnv1.RunFunctionRequest
-	_, err = evalPackage(t.config.TestPackage, tag, requestVar, &req)
+	requestVal, err := evalPackage(t.config.TestPackage, tag, requestVar)
 	if err != nil {
 		return errors.Wrap(err, "evaluate request")
+	}
+	if err := marshalValueIntoProtoMessage(requestVal, &req); err != nil {
+		return errors.Wrap(err, "marshal request")
 	}
 
 	opts := fn.EvalOptions{
@@ -256,18 +268,9 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		return errors.Wrap(err, "evaluate package with test request")
 	}
 
-	expectedBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(&expected)
-	if err != nil {
-		return errors.Wrap(err, "proto json marshal")
-	}
-	actualBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(actual)
-	if err != nil {
-		return errors.Wrap(err, "proto json marshal")
-	}
-
 	assertionMode := AssertionModeDiff
 
-	attr := val.Attribute("assertionMode")
+	attr := expectedVal.Attribute("assertionMode")
 	if attr.Err() == nil {
 		assertionMode, err = assertionModeFromString(attr.Contents())
 		if err != nil {
@@ -277,7 +280,15 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 
 	switch assertionMode {
 	case AssertionModeUnification:
-		assertionScript := fmt.Sprintf("expected: %s\n#Actual: %s\nunified: #Actual & expected\n", expectedBytes, actualBytes)
+		// in unification mode, we check if the expected and actual values are unifiable
+		// by compiling a cue script that unifies the two values
+
+		actualBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(actual)
+		if err != nil {
+			return errors.Wrap(err, "proto json marshal")
+		}
+
+		assertionScript := fmt.Sprintf("expected: %s\n#Actual: %s\nunified: #Actual & expected\n", expectedVal, actualBytes)
 
 		runtime := cuecontext.New()
 		assertVal := runtime.CompileString(assertionScript)
@@ -298,15 +309,13 @@ func (t *Tester) runTest(f *fn.Cue, codeBytes []byte, tag string) (finalErr erro
 		if err != nil {
 			return errors.Wrap(err, "serialize actual")
 		}
-		if expectedString == actualString {
-			return nil
+		if expectedString != actualString {
+			err = printDiffs(expectedString, actualString)
+			if err != nil {
+				_, _ = fmt.Fprintln(TestOutput, "error in running diff:", err)
+			}
+			return fmt.Errorf("expected did not match actual")
 		}
-
-		err = printDiffs(expectedString, actualString)
-		if err != nil {
-			_, _ = fmt.Fprintln(TestOutput, "error in running diff:", err)
-		}
-		return fmt.Errorf("expected did not match actual")
 	}
 	return nil
 }
