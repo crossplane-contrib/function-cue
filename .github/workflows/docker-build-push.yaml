@@ -9,7 +9,7 @@ on:
 
 env:
   GO_VERSION: '1.23.1'
-  DOCKER_BUILDX_VERSION: 'v0.11.2'
+  DOCKER_BUILDX_VERSION: 'v0.22.0'
   XP_CHANNEL: master
   XP_VERSION: current
   XPKG_ACCESS_ID: ${{ secrets.XPKG_ACCESS_ID }}
@@ -93,6 +93,7 @@ jobs:
         with:
           path: .
           merge-multiple: true
+          pattern: "!*.dockerbuild" # This gets uploaded by docker/build-push-action but must be skipped: https://github.com/actions/toolkit/pull/1874
 
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
