@@ -100,6 +100,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: setup LDFLAGS
+        run: |
+          LDFLAGS="$(make ci-print-ldflags)"
+          echo "LDFLAGS=${LDFLAGS}">>$GITHUB_ENV
+
       # We ask Docker to use GitHub Action's native caching support to speed up
       # the build, per https://docs.docker.com/build/cache/backends/gha/.
       - name: Build Runtime
@@ -111,8 +116,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: image
-          build-args:
+          build-args: |
             GO_VERSION=${{ env.GO_VERSION }}
+            LDFLAGS=${{ env.LDFLAGS }}
           outputs: type=docker,dest=runtime-${{ matrix.arch }}.tar
 
       - name: Setup the Crossplane CLI
@@ -155,6 +161,9 @@ jobs:
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
 
+      - name: Set Multi-Platform Package Version
+        run: echo "XPKG_VERSION=$(make ci-print-version)" >> $GITHUB_ENV
+
       - name: Login to Upbound
         uses: docker/login-action@v3
         if: env.XPKG_ACCESS_ID != ''
@@ -162,14 +171,6 @@ jobs:
           registry: xpkg.upbound.io
           username: ${{ secrets.XPKG_ACCESS_ID }}
           password: ${{ secrets.XPKG_TOKEN }}
-
-      # If a version wasn't explicitly passed as a workflow_dispatch input we
-      # default to version v0.0.0-<git-commit-date>-<git-short-sha>, for example
-      # v0.0.0-20231101115142-1091066df799. This is a simple implementation of
-      # Go's pseudo-versions: https://go.dev/ref/mod#pseudo-versions.
-      - name: Set Default Multi-Platform Package Version
-        if: env.XPKG_VERSION == ''
-        run: echo "XPKG_VERSION=v0.0.0-$(date -d@$(git show -s --format=%ct) +%Y%m%d%H%M%S)-$(git rev-parse --short=12 HEAD)" >> $GITHUB_ENV
 
       - name: Push Multi-Platform Package to Upbound
         if: env.XPKG_ACCESS_ID != ''
