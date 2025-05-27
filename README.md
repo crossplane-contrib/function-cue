@@ -5,7 +5,7 @@ Contributed by [Elastic](https://github.com/elastic) from their [initial impleme
 
 #### Build status
 
-![go build](https://github.com/crossplane-contrib/function-cue/actions/workflows/go-build.yaml/badge.svg?branch=main)
+![CI](https://github.com/crossplane-contrib/function-cue/actions/workflows/ci.yaml/badge.svg?branch=main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/crossplane-contrib/function-cue)](https://goreportcard.com/report/github.com/crossplane-contrib/function-cue)
 [![Go Coverage](https://github.com/crossplane-contrib/function-cue/wiki/coverage.svg)](https://raw.githack.com/wiki/elastic/function-cue/coverage.html)
 
