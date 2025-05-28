@@ -39,6 +39,23 @@ env:
   XPKG_VERSION: ${{ inputs.version }}
 
 jobs:
+  check-dirty:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run go generate
+        run: make generate
+
+      - name: Check dirty files from go generate
+        run: make ci-check-dirty
+
   lint:
     runs-on: ubuntu-24.04
     steps:
@@ -144,6 +161,7 @@ jobs:
   push:
     runs-on: ubuntu-24.04
     needs:
+      - check-dirty
       - lint
       - unit-test
       - build

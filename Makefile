@@ -35,9 +35,12 @@ local: build test lint
 	mkdir -p ./.bin
 	GOBIN="$$(pwd)/.bin" go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.2
 
-.PHONY: build
-build:
+.PHONY: generate
+generate:
 	CGO_ENABLED=0 go generate ./...
+
+.PHONY: build
+build: generate
 	CGO_ENABLED=0 go install -ldflags="$(ldflags)" ./...
 
 .PHONY: test
