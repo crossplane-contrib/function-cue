@@ -5,7 +5,7 @@ import (
 )
 
 _functions: cuefn: xp.#Function & {
-	apiVersion: "pkg.crossplane.io/v1beta1"
+	apiVersion: "pkg.crossplane.io/v1"
 	kind:       "Function"
 	metadata: {
 		name: "fn-cue-examples-simple"
@@ -17,7 +17,7 @@ _functions: cuefn: xp.#Function & {
 }
 
 _functions: readyFn: xp.#Function & {
-	apiVersion: "pkg.crossplane.io/v1beta1"
+	apiVersion: "pkg.crossplane.io/v1"
 	kind:       "Function"
 	metadata: name: "fn-auto-ready"
 	spec: {

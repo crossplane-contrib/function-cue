@@ -20,7 +20,7 @@ $ make docker # build docker image
 
 You define the function as follows:
 ```yaml
-apiVersion: pkg.crossplane.io/v1beta1
+apiVersion: pkg.crossplane.io/v1
 kind: Function
 metadata:
   name: fn-cue
