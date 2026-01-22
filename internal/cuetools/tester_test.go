@@ -85,6 +85,38 @@ FAIL incorrect: expected did not match actual
 	assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buf.String()))
 }
 
+func TestAssertionModes(t *testing.T) {
+	fn := chdirCueRoot(t)
+	defer fn()
+	buf, reset := getOutput()
+	defer reset()
+	tester, err := NewTester(TestConfig{
+		Package:     "./runtime",
+		TestPackage: "./assertionmodes/tests",
+	})
+	require.NoError(t, err)
+	envDiff := ExternalDiffEnvVar
+	diffProgram := os.Getenv(envDiff)
+	if diffProgram != "" {
+		err = os.Unsetenv(envDiff) // we expect a specific diff format
+		require.NoError(t, err)
+		defer func() { _ = os.Setenv(envDiff, diffProgram) }()
+	}
+	err = tester.Run()
+	expected := `
+running test tags: incorrect_unification, incorrect_unification_extra, unification
+> run test "incorrect_unification"
+FAIL incorrect_unification: compile cue code: unified.desired.resources.main.resource.foo: conflicting values "baz" and "bar"
+> run test "incorrect_unification_extra"
+FAIL incorrect_unification_extra: compile cue code: unified.desired.resources.main.resource.extra: field not allowed
+> run test "unification"
+PASS unification
+`
+	require.Error(t, err)
+	assert.Equal(t, "2 of 3 tests had errors", err.Error())
+	assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buf.String()))
+}
+
 func TestTesterLegacyOptions(t *testing.T) {
 	fn := chdirCueRoot(t)
 	defer fn()
