@@ -121,8 +121,8 @@ response: desired: resources: main: resource: {
 	req := makeRequest(t)
 
 	var extraResources structpb.Struct
-	extraResourcesJson := `{"spec": {"foo": "bar"}}`
-	require.NoError(t, protojson.Unmarshal([]byte(extraResourcesJson), &extraResources))
+	extraResourcesJSON := `{"spec": {"foo": "bar"}}`
+	require.NoError(t, protojson.Unmarshal([]byte(extraResourcesJSON), &extraResources))
 
 	req.ExtraResources = map[string]*fnv1.Resources{
 		"xprojects": {
@@ -142,7 +142,7 @@ response: desired: resources: main: resource: {
 	assert.Equal(t, `{"desired":{"resources":{"main":{"resource":{"foo":"bar"}}}}}`, blanksRemoved)
 }
 
-// TestRunFunctionWithFunctionExtraResourcesContext test composition pipeline with previous step github.com/crossplane-contrib/function-extra-resources
+// TestRunFunctionWithFunctionExtraResourcesContext test composition pipeline with previous step github.com/crossplane-contrib/function-extra-resources.
 func TestRunFunctionWithFunctionExtraResourcesContext(t *testing.T) {
 	reqJSON := `
 {
