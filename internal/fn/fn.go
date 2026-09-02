@@ -86,9 +86,10 @@ type EvalOptions struct {
 func (f *Cue) Eval(in *fnv1.RunFunctionRequest, script string, opts EvalOptions) (*fnv1.RunFunctionResponse, error) {
 	// input request only contains properties as documented in the interface, not the whole object
 	req := &fnv1.RunFunctionRequest{
-		Observed: in.GetObserved(),
-		Desired:  in.GetDesired(),
-		Context:  in.GetContext(),
+		Observed:       in.GetObserved(),
+		Desired:        in.GetDesired(),
+		Context:        in.GetContext(),
+		ExtraResources: in.GetExtraResources(),
 	}
 	// extract request as object
 	reqBytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(req)

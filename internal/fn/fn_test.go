@@ -108,6 +108,113 @@ resources: main: resource: {
 	assert.Equal(t, `{"desired":{"resources":{"main":{"resource":{"bar":"baz","foo":"bar"}}}}}`, blanksRemoved)
 }
 
+func TestEvalExtraResources(t *testing.T) {
+	script := `
+package runtime
+#request: {...}
+response: desired: resources: main: resource: {
+	foo: #request.extraResources.xprojects.items[0].resource.spec.foo
+}
+`
+	f, err := New(Options{})
+	require.NoError(t, err)
+	req := makeRequest(t)
+
+	var extraResources structpb.Struct
+	extraResourcesJSON := `{"spec": {"foo": "bar"}}`
+	require.NoError(t, protojson.Unmarshal([]byte(extraResourcesJSON), &extraResources))
+
+	req.ExtraResources = map[string]*fnv1.Resources{
+		"xprojects": {
+			Items: []*fnv1.Resource{
+				{Resource: &extraResources},
+			},
+		},
+	}
+	res, err := f.Eval(req, script, EvalOptions{
+		RequestVar:  "#request",
+		ResponseVar: "response",
+		Debug:       DebugOptions{Enabled: true, Script: true},
+	})
+	require.NoError(t, err)
+	b, _ := protojson.Marshal(res)
+	blanksRemoved := strings.ReplaceAll(string(b), " ", "")
+	assert.Equal(t, `{"desired":{"resources":{"main":{"resource":{"foo":"bar"}}}}}`, blanksRemoved)
+}
+
+// TestRunFunctionWithFunctionExtraResourcesContext test composition pipeline with previous step github.com/crossplane-contrib/function-extra-resources.
+func TestRunFunctionWithFunctionExtraResourcesContext(t *testing.T) {
+	reqJSON := `
+{
+	"meta": { "tag": "v1" },
+	"observed": {
+		"composite": {
+			"resource": {
+				"apiVersion": "example.crossplane.io/v1",
+				"kind": "XR",
+				"metadata": { "name": "my-xr" }
+			}
+		}
+	},
+	"context": {
+		"apiextensions.crossplane.io/extra-resources": {
+			"XCluster": [
+				{
+					"apiVersion": "example.crossplane.io/v1",
+					"kind": "XCluster",
+					"metadata": { "name": "cluster-a" }
+				},
+				{
+					"apiVersion": "example.crossplane.io/v1",
+					"kind": "XCluster",
+					"metadata": { "name": "cluster-b" }
+				}
+			]
+		}
+	}
+}
+`
+	var req fnv1.RunFunctionRequest
+	require.NoError(t, protojson.Unmarshal([]byte(reqJSON), &req))
+
+	script := `
+package runtime
+#request: {...}
+#xClusters: #request.context["apiextensions.crossplane.io/extra-resources"].XCluster
+response: desired: resources: {
+	for c in #xClusters {
+		"vaultrole-\(c.metadata.name)": resource: {
+			apiVersion: "vault.upbound.io/v1beta1"
+			kind:       "VaultRole"
+			metadata: annotations: "gotemplating.fn.crossplane.io/composition-resource-name": c.metadata.name
+			spec: forProvider: {}
+		}
+	}
+}
+`
+	in := input.CueInput{
+		TypeMeta:   metav1.TypeMeta{APIVersion: "v1Aplha1", Kind: "Function"},
+		ObjectMeta: metav1.ObjectMeta{Name: "foobar"},
+		Script:     script,
+		Debug:      true,
+	}
+	b, err := json.Marshal(in)
+	require.NoError(t, err)
+	var untyped structpb.Struct
+	require.NoError(t, protojson.Unmarshal(b, &untyped))
+	req.Input = &untyped
+
+	f, err := New(Options{Debug: true})
+	require.NoError(t, err)
+	res, err := f.RunFunction(context.Background(), &req)
+	require.NoError(t, err)
+
+	b, err = protojson.Marshal(res)
+	require.NoError(t, err)
+	blanksRemoved := strings.ReplaceAll(string(b), " ", "")
+	assert.Equal(t, `{"meta":{"tag":"v1","ttl":"60s"},"desired":{"resources":{"vaultrole-cluster-a":{"resource":{"apiVersion":"vault.upbound.io/v1beta1","kind":"VaultRole","metadata":{"annotations":{"gotemplating.fn.crossplane.io/composition-resource-name":"cluster-a"}},"spec":{"forProvider":{}}}},"vaultrole-cluster-b":{"resource":{"apiVersion":"vault.upbound.io/v1beta1","kind":"VaultRole","metadata":{"annotations":{"gotemplating.fn.crossplane.io/composition-resource-name":"cluster-b"}},"spec":{"forProvider":{}}}}}},"results":[{"severity":"SEVERITY_NORMAL","message":"cuemoduleexecutedsuccessfully","target":"TARGET_COMPOSITE"}],"context":{"apiextensions.crossplane.io/extra-resources":{"XCluster":[{"apiVersion":"example.crossplane.io/v1","kind":"XCluster","metadata":{"name":"cluster-a"}},{"apiVersion":"example.crossplane.io/v1","kind":"XCluster","metadata":{"name":"cluster-b"}}]}}}`, blanksRemoved)
+}
+
 func TestEvalBadRuntimeCode(t *testing.T) {
 	script := `
 package runtime

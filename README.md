@@ -68,8 +68,12 @@ additional cue code that looks like the following:
 ```
 
 The &lt;input-object&gt; is the same as the [RunFunctionRequest](https://github.com/crossplane/crossplane/blob/bf5c51e6dfdde4c45a0d50c31c23147f5050e9dd/apis/apiextensions/fn/proto/v1beta1/run_function.proto#L33) 
-message in JSON form, except it only contains the `observed`, `desired`, and `context` attributes. 
+message in JSON form, except it only contains the `observed`, `desired`, `context`, and `extraResources` attributes.
 It does **not** have the `meta` or the `input` attributes.
+
+The `extraResources` attribute lets you read resources fetched by an earlier pipeline step, such as
+[function-extra-resources](https://github.com/crossplane-contrib/function-extra-resources). It is keyed by the
+name each resource (or resource selector) was given by that step.
 
 The cue script is expected to return a response that is the JSON equivalent of the [RunFunctionResponse](https://github.com/crossplane/crossplane/blob/bf5c51e6dfdde4c45a0d50c31c23147f5050e9dd/apis/apiextensions/fn/proto/v1beta1/run_function.proto#L66)
 message containing the desired state and optionally context variables to be set for the pipeline. 
