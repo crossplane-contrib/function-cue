@@ -108,6 +108,40 @@ resources: main: resource: {
 	assert.Equal(t, `{"desired":{"resources":{"main":{"resource":{"bar":"baz","foo":"bar"}}}}}`, blanksRemoved)
 }
 
+func TestEvalExtraResources(t *testing.T) {
+	script := `
+package runtime
+#request: {...}
+response: desired: resources: main: resource: {
+	foo: #request.extraResources.xprojects.items[0].resource.spec.foo
+}
+`
+	f, err := New(Options{})
+	require.NoError(t, err)
+	req := makeRequest(t)
+
+	var extraResources structpb.Struct
+	extraResourcesJson := `{"spec": {"foo": "bar"}}`
+	require.NoError(t, protojson.Unmarshal([]byte(extraResourcesJson), &extraResources))
+
+	req.ExtraResources = map[string]*fnv1.Resources{
+		"xprojects": {
+			Items: []*fnv1.Resource{
+				{Resource: &extraResources},
+			},
+		},
+	}
+	res, err := f.Eval(req, script, EvalOptions{
+		RequestVar:  "#request",
+		ResponseVar: "response",
+		Debug:       DebugOptions{Enabled: true, Script: true},
+	})
+	require.NoError(t, err)
+	b, _ := protojson.Marshal(res)
+	blanksRemoved := strings.ReplaceAll(string(b), " ", "")
+	assert.Equal(t, `{"desired":{"resources":{"main":{"resource":{"foo":"bar"}}}}}`, blanksRemoved)
+}
+
 func TestEvalBadRuntimeCode(t *testing.T) {
 	script := `
 package runtime
